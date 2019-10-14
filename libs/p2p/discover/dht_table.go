@@ -708,20 +708,75 @@ func (tab *DhtTable) copyLiveNodes() {
 
 // closest returns the n nodes in the table that are closest to the
 // given id. The caller must hold tab.mutex.
+// func (tab *DhtTable) closest(target common.NodeID, nresults int, checklive bool) *nodesByDistance {
+// 	// This is a very wasteful way to find the closest nodes but
+// 	// obviously correct. I believe that tree-based buckets would make
+// 	// this easier to implement efficiently.
+// 	close := &nodesByDistance{target: target}
+// 	for _, b := range &tab.buckets {
+// 		for _, n := range b.entries {
+// 			if checklive && n.livenessChecks == 0 {
+// 				continue
+// 			}
+// 			close.push(n, nresults)
+// 		}
+// 	}
+// 	return close
+// }
+
 func (tab *DhtTable) closest(target common.NodeID, nresults int, checklive bool) *nodesByDistance {
 	// This is a very wasteful way to find the closest nodes but
 	// obviously correct. I believe that tree-based buckets would make
 	// this easier to implement efficiently.
 	close := &nodesByDistance{target: target}
-	for _, b := range &tab.buckets {
-		for _, n := range b.entries {
+	// bucket := tab.bucket(target)
+	bucketID := tab.bucketID(target)
+
+	for _, n := range tab.buckets[bucketID].entries {
+		if checklive && n.livenessChecks == 0 {
+			continue
+		}
+		close.push(n, nresults)
+	}
+
+	if len(close.entries) == nresults {
+		return close
+	}
+
+	for i := bucketID - 1; i >= 0; i-- {
+		for _, n := range tab.buckets[i].entries {
 			if checklive && n.livenessChecks == 0 {
 				continue
 			}
 			close.push(n, nresults)
 		}
 	}
+
+	if len(close.entries) == nresults {
+		return close
+	}
+
+	for i := bucketID + 1; i < nBuckets; i++ {
+		for _, n := range tab.buckets[i].entries {
+			if checklive && n.livenessChecks == 0 {
+				continue
+			}
+			close.push(n, nresults)
+		}
+		if len(close.entries) == nresults {
+			return close
+		}
+	}
+
 	return close
+}
+
+func (tab *DhtTable) bucketID(id common.NodeID) int {
+	d := LogDist(tab.self().ID, id)
+	if d <= bucketMinDistance {
+		return 0
+	}
+	return d - bucketMinDistance - 1
 }
 
 // len returns the number of nodes in the table.
