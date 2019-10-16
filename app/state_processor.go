@@ -97,7 +97,7 @@ func (p *StateProcessor) Process(block *types.Block, statedb *state.StateDB, cfg
 	// Iterate over and process the individual transactions
 	for idx, txRaw := range block.Data.Txs {
 		switch tx := txRaw.(type) {
-		case *types.Transaction, *types.TokenTransaction, *types.ContractCreateTx, *types.ContractUpgradeTx:
+		case *types.Transaction, *types.TokenTransaction, *types.ContractUpgradeTx:
 			if tx.TypeName() == types.TxNormal {
 				err := tx.(*types.Transaction).CheckBasicWithState(nil, statedb)
 				if err != nil {

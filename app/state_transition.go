@@ -379,10 +379,10 @@ func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, byteCodeG
 	msg := st.msg
 	log.Debug("TransitionDb", "msg", msg)
 	sender := evm.AccountRef(msg.MsgFrom())
-	isContractCreationTx := (msg.TxType() == types.TxContractCreate || msg.TxType() == types.TxContractUpgrade)
-	contractCreation := (msg.To() == nil && msg.TxType() == types.TxNormal) || (isContractCreationTx)
+	isContractUpgradeTx := msg.TxType() == types.TxContractUpgrade
+	contractCreation := msg.To() == nil && msg.TxType() == types.TxNormal 
 
-	if isContractCreationTx {
+	if isContractUpgradeTx {
 		st.gas += msg.Gas()
 		st.initialGas = msg.Gas()
 	} else {
@@ -493,7 +493,7 @@ func (st *StateTransition) TransitionDb() (ret []byte, usedGas uint64, byteCodeG
 		log.Debug("gas info", "gasLimit", msg.Gas(), "gasUsed", st.gasUsed(), "gasPrice", msg.GasPrice().String())
 	}
 
-	if isContractCreationTx {
+	if  isContractUpgradeTx {
 		fee = new(big.Int).SetUint64(0)
 		st.gas += st.gasUsed()
 	} else {

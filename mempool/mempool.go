@@ -463,7 +463,7 @@ func (mem *Mempool) AddTx(peerID string, tx types.Tx) (err error) {
 			}
 		}
 		err = mem.addUTXOTx(tx)
-	case *types.Transaction, *types.TokenTransaction, *types.ContractCreateTx, *types.ContractUpgradeTx:
+	case *types.Transaction, *types.TokenTransaction, *types.ContractUpgradeTx:
 		// blacklist check
 		var fromAddr, toAddr common.Address
 		fromAddr, _ = tx.From()
